@@ -18,5 +18,22 @@ export const useTaskStore = defineStore('tasks', () => {
     }
   };
 
-  return { dataSource, loading, error, loadTasks };
+  const addTask = (newTask) => {
+    try {
+      const formattedDeveloper = Array.isArray(newTask.developer) 
+        ? newTask.developer.join(', ')
+        : newTask.developer;
+
+      dataSource.value.unshift({
+        ...newTask,   
+        developer: formattedDeveloper
+      });
+
+    } catch (err) {
+      error.value = 'Failed to add task';
+      console.error(err);
+    }
+  };
+
+  return { dataSource, loading, error, loadTasks, addTask };
 });

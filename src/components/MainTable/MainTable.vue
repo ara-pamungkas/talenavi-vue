@@ -1,6 +1,6 @@
 <template>
   <div class="main-table-header">
-    <Button type="primary" :icon="plusIcon">New Task</Button>
+    <Button :icon="plusIcon" type="primary" @click="showModal">New Task</Button>
 
     <Input
       v-model:value="searchQuery"
@@ -39,6 +39,7 @@
       <SelectOption value="status-ascend">Status (ASC)</SelectOption>
       <SelectOption value="status-descend">Status (DESC)</SelectOption>
     </Select>
+    <CreateTask v-model:open="visible" @task-created="handleNewTask" />
   </div>
   <div>
     <Table
@@ -46,7 +47,97 @@
       :columns="columns"
       :loading="taskStore.loading"
       rowKey="id"
-    />
+    >
+      <template #summary>
+        <Table.Summary>
+          <Table.Summary.Row>
+            <Table.Summary.Cell :index="0" />
+            <Table.Summary.Cell :index="1" />
+
+            <Table.Summary.Cell :index="2">
+              <div
+                style="
+                  display: flex;
+                  width: 100%;
+                  height: 16px;
+                  overflow: hidden;
+                  border-radius: 4px;
+                "
+              >
+                <template
+                  v-for="(item, index) in getBarSegments(
+                    'priority',
+                    PRIORITY_COLOROS
+                  )"
+                  :key="index"
+                >
+                  <div
+                    :style="{
+                      width: item.percent + '%',
+                      backgroundColor: item.color,
+                    }"
+                  />
+                </template>
+              </div>
+            </Table.Summary.Cell>
+
+            <Table.Summary.Cell :index="3">
+              <div
+                style="
+                  display: flex;
+                  width: 100%;
+                  height: 16px;
+                  overflow: hidden;
+                  border-radius: 4px;
+                "
+              >
+                <template
+                  v-for="(item, index) in getBarSegments(
+                    'status',
+                    STATUS_COLORS
+                  )"
+                  :key="index"
+                >
+                  <div
+                    :style="{
+                      width: item.percent + '%',
+                      backgroundColor: item.color,
+                    }"
+                  />
+                </template>
+              </div>
+            </Table.Summary.Cell>
+
+            <Table.Summary.Cell :index="4">
+              <div
+                style="
+                  display: flex;
+                  width: 100%;
+                  height: 16px;
+                  overflow: hidden;
+                  border-radius: 4px;
+                "
+              >
+                <template
+                  v-for="(item, index) in getBarSegments('type', TYPE_COLORS)"
+                  :key="index"
+                >
+                  <div
+                    :style="{
+                      width: item.percent + '%',
+                      backgroundColor: item.color,
+                    }"
+                  />
+                </template>
+              </div>
+            </Table.Summary.Cell>
+
+            <Table.Summary.Cell :index="5" />
+            <Table.Summary.Cell :index="6" />
+          </Table.Summary.Row>
+        </Table.Summary>
+      </template>
+    </Table>
   </div>
 </template>
 
@@ -65,12 +156,36 @@ import {
   STATUS_COLORS,
   TYPE_COLORS,
 } from "../../constants/mainTable.constants";
+import CreateTask from "../../utils/CreateTask.vue";
 
 const { Option: SelectOption } = Select;
 
 const searchQuery = ref("");
 const selectedDeveloper = ref(null);
 const selectedSort = ref([]);
+
+const visible = ref(false);
+
+const showModal = () => {
+  visible.value = true;
+};
+
+const getBarSegments = (key, colorMap) => {
+  const total = filteredData.value.length;
+  const countMap = {};
+
+  filteredData.value.forEach((item) => {
+    const value = item[key];
+    if (value) {
+      countMap[value] = (countMap[value] || 0) + 1;
+    }
+  });
+
+  return Object.entries(countMap).map(([val, count]) => ({
+    color: colorMap[val] || "gray",
+    percent: (count / total) * 100,
+  }));
+};
 
 const searchIcon = h(SearchOutlined);
 const plusIcon = h(PlusOutlined);
@@ -125,6 +240,10 @@ const columns = ref([
   },
 ]);
 
+const handleNewTask = (newTask) => {
+  taskStore.addTask(newTask);
+};
+
 const handleMultiSort = () => {
   if (!selectedSort.value || selectedSort.value.length === 0) return;
 
@@ -136,7 +255,6 @@ const handleMultiSort = () => {
 
       if (valA < valB) return order === "ascend" ? -1 : 1;
       if (valA > valB) return order === "ascend" ? 1 : -1;
-      // If equal, check next field
     }
     return 0;
   });
@@ -145,10 +263,14 @@ const handleMultiSort = () => {
 };
 
 const filteredData = computed(() => {
-  let data = taskStore.dataSource;
+  let data = [...taskStore.dataSource];
 
   if (selectedDeveloper.value) {
-    data = data.filter((task) => task.developer === selectedDeveloper.value);
+    data = data.filter((task) =>
+      task.developer
+        .toLowerCase()
+        .includes(selectedDeveloper.value.toLowerCase())
+    );
   }
 
   if (searchQuery.value) {

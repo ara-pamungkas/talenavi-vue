@@ -2,6 +2,7 @@
 import { Tabs } from 'ant-design-vue';
 import { ref } from 'vue';
 import MainTable from './components/MainTable/MainTable.vue';
+import Kanban from './components/Kanban/Kanban.vue';
 const { TabPane } = Tabs;
 
 const activeKey = ref('1'); 
@@ -14,7 +15,7 @@ const activeKey = ref('1');
       <MainTable />
     </TabPane>
     <TabPane key="2" tab="Kanban" force-render>
-      Content of Tab Pane 2
+     <Kanban />
     </TabPane>
   </Tabs>
   </div>

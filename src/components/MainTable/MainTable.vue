@@ -171,19 +171,35 @@ const showModal = () => {
 };
 
 const getBarSegments = (key, colorMap) => {
-  const total = filteredData.value.length;
-  const countMap = {};
+  const validItems = filteredData.value.filter((item) => item && item[key]);
+  const total = validItems.length;
 
-  filteredData.value.forEach((item) => {
+  if (total === 0) return [];
+
+  const countMap = {};
+  validItems.forEach((item) => {
     const value = item[key];
-    if (value) {
-      countMap[value] = (countMap[value] || 0) + 1;
-    }
+    countMap[value] = (countMap[value] || 0) + 1;
   });
 
-  return Object.entries(countMap).map(([val, count]) => ({
-    color: colorMap[val] || "gray",
-    percent: (count / total) * 100,
+  const colorSegments = {};
+  Object.entries(countMap).forEach(([val, count]) => {
+    const color = colorMap[val] || "gray";
+    if (!colorSegments[color]) {
+      colorSegments[color] = {
+        color,
+        count: 0,
+        labels: [],
+      };
+    }
+    colorSegments[color].count += count;
+    colorSegments[color].labels.push(val);
+  });
+
+  return Object.values(colorSegments).map((segment) => ({
+    color: segment.color,
+    percent: (segment.count / total) * 100,
+    labels: segment.labels,
   }));
 };
 

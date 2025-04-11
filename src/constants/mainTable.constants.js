@@ -18,7 +18,7 @@ const STATUS_COLORS = {
 const TYPE_COLORS = {
   Other: "gray",
   Bug: "volcano",
-  "Feature Enchancements": "darkblue",
+  "Feature Enchancements": "#1d39c4",
 };
 
 export { PRIORITY_COLOROS, STATUS_COLORS, TYPE_COLORS };
